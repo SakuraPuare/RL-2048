@@ -3,13 +3,20 @@ import time
 import numpy as np
 from datetime import datetime
 import os
+from pathlib import Path
 
 class GameRecorder:
     def __init__(self):
         self.history = []
         self.start_time = time.time()
         self.game_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.current_filename = f"game_record_{self.game_id}.json"
+        
+        # 创建record文件夹
+        self.record_dir = Path("record")
+        self.record_dir.mkdir(exist_ok=True)
+        
+        # 设置默认文件名（在record文件夹中）
+        self.current_filename = self.record_dir / f"game_record_{self.game_id}.json"
         
         # 创建初始记录文件
         self._update_record_file()
@@ -51,11 +58,11 @@ class GameRecorder:
         }
         
         # 确保目录存在
-        os.makedirs(os.path.dirname(self.current_filename) if os.path.dirname(self.current_filename) else '.', exist_ok=True)
+        self.current_filename.parent.mkdir(exist_ok=True)
         
         # 写入文件
-        with open(self.current_filename, 'w') as f:
-            json.dump(data, f, indent=2)
+        with open(self.current_filename, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
     
     def save_to_file(self, filename=None):
         """
@@ -64,12 +71,24 @@ class GameRecorder:
         参数:
             filename: 文件名，如果为None则使用默认名称
         """
-        if filename is not None and filename != self.current_filename:
-            # 如果指定了新文件名，则复制当前文件
-            self.current_filename = filename
-            self._update_record_file()
+        if filename is not None:
+            # 转换为Path对象
+            filepath = Path(filename)
+            
+            # 如果提供的文件名不包含路径，则添加record文件夹路径
+            if not filepath.parent.name:
+                filepath = self.record_dir / filepath
+            
+            # 如果文件名不以.json结尾，添加扩展名
+            if filepath.suffix != '.json':
+                filepath = filepath.with_suffix('.json')
+                
+            # 更新当前文件名
+            if filepath != self.current_filename:
+                self.current_filename = filepath
+                self._update_record_file()
         
-        return self.current_filename
+        return str(self.current_filename)
     
     @staticmethod
     def load_from_file(filename):
@@ -82,7 +101,19 @@ class GameRecorder:
         返回:
             加载的游戏历史数据
         """
-        with open(filename, 'r') as f:
+        # 转换为Path对象
+        filepath = Path(filename)
+        
+        # 如果提供的文件名不包含路径，则添加record文件夹路径
+        if not filepath.parent.name:
+            record_dir = Path("record")
+            filepath = record_dir / filepath
+            
+        # 如果文件名不以.json结尾，添加扩展名
+        if filepath.suffix != '.json':
+            filepath = filepath.with_suffix('.json')
+            
+        with open(filepath, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
         # 将网格数据转换回numpy数组

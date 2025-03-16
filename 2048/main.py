@@ -1,10 +1,14 @@
 import sys
 import argparse
-import os
+from pathlib import Path
 from game import Game2048
 from display import ReplayDisplay
+from ensure_record_dir import ensure_record_dir
 
 def main():
+    # 确保record文件夹存在
+    ensure_record_dir()
+    
     parser = argparse.ArgumentParser(description='2048游戏')
     parser.add_argument('--text', action='store_true', help='在文本模式下运行（默认：图形界面模式）')
     parser.add_argument('--replay', type=str, help='回放游戏记录文件')
@@ -13,20 +17,32 @@ def main():
     
     # 回放模式
     if args.replay:
-        if not os.path.exists(args.replay):
-            print(f"错误：找不到记录文件 {args.replay}")
+        # 转换为Path对象
+        replay_file = Path(args.replay)
+        
+        # 如果提供的文件名不包含路径，则添加record文件夹路径
+        if not replay_file.parent.name:
+            record_dir = Path("record")
+            replay_file = record_dir / replay_file
+            
+        # 如果文件名不以.json结尾，添加扩展名
+        if replay_file.suffix != '.json':
+            replay_file = replay_file.with_suffix('.json')
+            
+        if not replay_file.exists():
+            print(f"错误：找不到记录文件 {replay_file}")
             return
         
         try:
             # 加载记录
-            replay_data = Game2048.replay_from_file(args.replay)
+            replay_data = Game2048.replay_from_file(str(replay_file))
             
             # 创建回放显示器
             display_type = "text" if args.text else "graphical"
             replay_display = ReplayDisplay(replay_data, display_type, args.speed)
             
             # 开始回放
-            print(f"正在回放游戏记录：{args.replay}")
+            print(f"正在回放游戏记录：{replay_file}")
             replay_display.start_replay()
             
         except Exception as e:
