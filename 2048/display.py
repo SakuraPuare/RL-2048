@@ -283,6 +283,7 @@ class ReplayDisplay:
         
         # 每步之间的固定等待时间（秒）
         step_delay = 0.5 / self.speed  # 默认0.5秒，根据速度调整
+        base_delay = 0.5  # 基础延迟时间
         
         while running and current_index < len(history):
             for event in pygame.event.get():
@@ -315,12 +316,27 @@ class ReplayDisplay:
                                         current_index = max(0, current_index - 2)
                                         paused = False
                                         step_delay = 0  # 立即显示
+                                    # 速度控制
+                                    elif pause_event.key == pygame.K_UP:
+                                        # 加快回放速度
+                                        self.speed = min(8.0, self.speed * 1.5)
+                                        step_delay = base_delay / self.speed
+                                    elif pause_event.key == pygame.K_DOWN:
+                                        # 减慢回放速度
+                                        self.speed = max(0.25, self.speed / 1.5)
+                                        step_delay = base_delay / self.speed
                             
-                            # 显示暂停消息
+                            # 显示暂停消息和速度信息
                             pause_text = get_font(24).render("已暂停 - 按空格键继续", True, TEXT_COLOR_LIGHT)
+                            speed_text = get_font(18).render(f"速度: {self.speed:.2f}x (↑加快 ↓减慢)", True, TEXT_COLOR_LIGHT)
+                            
                             self.display.screen.blit(
                                 pause_text, 
                                 (WINDOW_WIDTH // 2 - pause_text.get_width() // 2, 20)
+                            )
+                            self.display.screen.blit(
+                                speed_text,
+                                (WINDOW_WIDTH // 2 - speed_text.get_width() // 2, 50)
                             )
                             pygame.display.flip()
                             self.display.tick(30)
@@ -331,6 +347,15 @@ class ReplayDisplay:
                         # 左箭头键：上一步
                         current_index = max(0, current_index - 2)
                         step_delay = 0  # 立即显示
+                    # 速度控制
+                    elif event.key == pygame.K_UP:
+                        # 加快回放速度
+                        self.speed = min(8.0, self.speed * 1.5)
+                        step_delay = base_delay / self.speed
+                    elif event.key == pygame.K_DOWN:
+                        # 减慢回放速度
+                        self.speed = max(0.25, self.speed / 1.5)
+                        step_delay = base_delay / self.speed
             
             # 获取当前状态
             state = history[current_index]
@@ -349,16 +374,22 @@ class ReplayDisplay:
                 is_won
             )
             
-            # 显示步骤信息
+            # 显示步骤信息和速度信息
             step_info = f"步骤: {current_index + 1}/{len(history)}"
             if state["move_direction"] is not None:
                 direction_names = ["上", "右", "下", "左"]
                 step_info += f" - 移动: {direction_names[state['move_direction']]}"
             
             step_text = get_font(18).render(step_info, True, TEXT_COLOR_LIGHT)
+            speed_text = get_font(18).render(f"速度: {self.speed:.2f}x (↑加快 ↓减慢)", True, TEXT_COLOR_LIGHT)
+            
             self.display.screen.blit(
                 step_text, 
                 (10, 10)
+            )
+            self.display.screen.blit(
+                speed_text,
+                (WINDOW_WIDTH - 10 - speed_text.get_width(), 10)
             )
             pygame.display.flip()
             
@@ -367,7 +398,7 @@ class ReplayDisplay:
                 time.sleep(step_delay)
             else:
                 # 如果是由于按键导致的立即显示，重置延迟时间
-                step_delay = 0.5 / self.speed
+                step_delay = base_delay / self.speed
             
             current_index += 1
             self.display.tick(60)
@@ -412,6 +443,7 @@ class ReplayDisplay:
     def _text_replay(self, history):
         """文本界面回放"""
         current_index = 0
+        base_delay = 0.5  # 基础延迟时间
         
         while current_index < len(history):
             # 获取当前状态
@@ -431,13 +463,14 @@ class ReplayDisplay:
                 is_won
             )
             
-            # 显示步骤信息
+            # 显示步骤信息和速度信息
             print(f"\n回放进度: {current_index + 1}/{len(history)}")
             if state["move_direction"] is not None:
                 direction_names = ["上", "右", "下", "左"]
                 print(f"移动方向: {direction_names[state['move_direction']]}")
             
-            print("按Enter继续，按Q退出，按B返回上一步")
+            print(f"当前速度: {self.speed:.2f}x")
+            print("控制: Enter(继续) Q(退出) B(上一步) +/-(调整速度)")
             
             # 等待用户输入
             user_input = input().lower()
@@ -446,6 +479,14 @@ class ReplayDisplay:
             elif user_input == 'b' and current_index > 0:
                 current_index -= 1
                 continue
+            elif user_input == '+':
+                # 加快回放速度
+                self.speed = min(8.0, self.speed * 1.5)
+                print(f"速度调整为: {self.speed:.2f}x")
+            elif user_input == '-':
+                # 减慢回放速度
+                self.speed = max(0.25, self.speed / 1.5)
+                print(f"速度调整为: {self.speed:.2f}x")
             
             current_index += 1
         
