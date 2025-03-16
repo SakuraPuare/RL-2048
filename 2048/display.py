@@ -256,7 +256,7 @@ class ReplayDisplay:
         参数:
             replay_data: 从文件加载的回放数据
             display_type: 显示类型 ("text" 或 "graphical")
-            speed: 回放速度倍数
+            speed: 回放速度倍数（默认为1.0，影响每步之间的等待时间）
         """
         self.replay_data = replay_data
         self.display_type = display_type
@@ -280,7 +280,9 @@ class ReplayDisplay:
         """图形界面回放"""
         running = True
         current_index = 0
-        last_timestamp = history[0]["timestamp"]
+        
+        # 每步之间的固定等待时间（秒）
+        step_delay = 0.5 / self.speed  # 默认0.5秒，根据速度调整
         
         while running and current_index < len(history):
             for event in pygame.event.get():
@@ -304,6 +306,15 @@ class ReplayDisplay:
                                     elif pause_event.key == pygame.K_ESCAPE:
                                         running = False
                                         paused = False
+                                    elif pause_event.key == pygame.K_RIGHT:
+                                        # 右箭头键：下一步
+                                        paused = False
+                                        step_delay = 0  # 立即显示下一步
+                                    elif pause_event.key == pygame.K_LEFT and current_index > 0:
+                                        # 左箭头键：上一步
+                                        current_index = max(0, current_index - 2)
+                                        paused = False
+                                        step_delay = 0  # 立即显示
                             
                             # 显示暂停消息
                             pause_text = get_font(24).render("已暂停 - 按空格键继续", True, TEXT_COLOR_LIGHT)
@@ -313,6 +324,13 @@ class ReplayDisplay:
                             )
                             pygame.display.flip()
                             self.display.tick(30)
+                    elif event.key == pygame.K_RIGHT:
+                        # 右箭头键：加速
+                        step_delay = 0  # 立即显示下一步
+                    elif event.key == pygame.K_LEFT and current_index > 0:
+                        # 左箭头键：上一步
+                        current_index = max(0, current_index - 2)
+                        step_delay = 0  # 立即显示
             
             # 获取当前状态
             state = history[current_index]
@@ -331,12 +349,25 @@ class ReplayDisplay:
                 is_won
             )
             
-            # 计算下一帧的等待时间
-            if current_index + 1 < len(history):
-                next_timestamp = history[current_index + 1]["timestamp"]
-                wait_time = (next_timestamp - last_timestamp) / self.speed
-                time.sleep(max(0, wait_time))
-                last_timestamp = next_timestamp
+            # 显示步骤信息
+            step_info = f"步骤: {current_index + 1}/{len(history)}"
+            if state["move_direction"] is not None:
+                direction_names = ["上", "右", "下", "左"]
+                step_info += f" - 移动: {direction_names[state['move_direction']]}"
+            
+            step_text = get_font(18).render(step_info, True, TEXT_COLOR_LIGHT)
+            self.display.screen.blit(
+                step_text, 
+                (10, 10)
+            )
+            pygame.display.flip()
+            
+            # 等待固定时间
+            if step_delay > 0:
+                time.sleep(step_delay)
+            else:
+                # 如果是由于按键导致的立即显示，重置延迟时间
+                step_delay = 0.5 / self.speed
             
             current_index += 1
             self.display.tick(60)
@@ -381,7 +412,6 @@ class ReplayDisplay:
     def _text_replay(self, history):
         """文本界面回放"""
         current_index = 0
-        last_timestamp = history[0]["timestamp"]
         
         while current_index < len(history):
             # 获取当前状态
@@ -401,21 +431,21 @@ class ReplayDisplay:
                 is_won
             )
             
-            # 显示回放信息
+            # 显示步骤信息
             print(f"\n回放进度: {current_index + 1}/{len(history)}")
-            print("按Enter继续，按Q退出")
+            if state["move_direction"] is not None:
+                direction_names = ["上", "右", "下", "左"]
+                print(f"移动方向: {direction_names[state['move_direction']]}")
+            
+            print("按Enter继续，按Q退出，按B返回上一步")
             
             # 等待用户输入
             user_input = input().lower()
             if user_input == 'q':
                 break
-            
-            # 计算下一帧的等待时间
-            if current_index + 1 < len(history):
-                next_timestamp = history[current_index + 1]["timestamp"]
-                wait_time = (next_timestamp - last_timestamp) / self.speed
-                # 在文本模式下，我们不等待，因为用户需要按Enter继续
-                last_timestamp = next_timestamp
+            elif user_input == 'b' and current_index > 0:
+                current_index -= 1
+                continue
             
             current_index += 1
         
