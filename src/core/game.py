@@ -1,6 +1,6 @@
 import random
 import numpy as np
-from recorder import GameRecorder
+from src.utils.recorder import GameRecorder
 
 class Game2048:
     def __init__(self, enable_recording=True):

@@ -1,7 +1,7 @@
 import sys
 import pygame
-from game import Game2048
-from display import GraphicalDisplay, TEXT_COLOR_LIGHT
+from src.core.game import Game2048
+from src.visualization.display import GraphicalDisplay, TEXT_COLOR_LIGHT
 
 def main():
     game = Game2048(enable_recording=True)

@@ -1,6 +1,6 @@
 import sys
-from game import Game2048
-from display import TextDisplay
+from src.core.game import Game2048
+from src.visualization.display import TextDisplay
 
 def main():
     game = Game2048(enable_recording=True)

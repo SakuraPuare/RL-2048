@@ -10,9 +10,8 @@ from tqdm import tqdm
 import os
 import sys
 
-# 添加2048目录到路径
-sys.path.append(os.path.join(os.path.dirname(__file__), '2048'))
-from game import Game2048
+# Import from the new structure
+from src.core.game import Game2048
 
 # Set random seeds for reproducibility
 random.seed(42)
@@ -210,7 +209,7 @@ def get_max_tile(grid):
     """Get the maximum tile value on the grid"""
     return np.max(grid)
 
-def train_agent(episodes=1000, target_update=10, save_interval=100, model_path="rl_model.pth"):
+def train_agent(episodes=1000, target_update=10, save_interval=100, model_path="models/rl_model.pth"):
     agent = DQNAgent()
     
     # Try to load existing model
@@ -315,7 +314,7 @@ def plot_training_progress(agent, episodes):
     plt.savefig(f"training_progress_{episodes}.png")
     plt.close()
 
-def play_game(agent, model_path="rl_model.pth", render=True):
+def play_game(agent, model_path="models/rl_model.pth", render=True):
     """Play a single game with the trained agent"""
     # Load the trained model
     agent.load_model(model_path)
@@ -359,7 +358,7 @@ if __name__ == "__main__":
     parser.add_argument('--train', action='store_true', help='Train the agent')
     parser.add_argument('--play', action='store_true', help='Play a game with the trained agent')
     parser.add_argument('--episodes', type=int, default=1000, help='Number of episodes for training')
-    parser.add_argument('--model', type=str, default="rl_model.pth", help='Path to save/load the model')
+    parser.add_argument('--model', type=str, default="models/rl_model.pth", help='Path to save/load the model')
     
     args = parser.parse_args()
     

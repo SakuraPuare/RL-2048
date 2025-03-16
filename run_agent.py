@@ -18,28 +18,38 @@ def main():
     
     args = parser.parse_args()
     
-    # Determine which agent script to run
-    agent_script = "rl_agent.py" if args.agent == 'dqn' else "cnn_rl_agent.py"
-    
     # Set default model path if not specified
     if args.model is None:
-        args.model = "rl_model.pth" if args.agent == 'dqn' else "cnn_rl_model.pth"
+        args.model = "models/rl_model.pth" if args.agent == 'dqn' else "models/cnn_rl_model.pth"
     
-    # Build command
-    cmd = [sys.executable, agent_script]
+    if args.agent == 'dqn':
+        if args.train and args.play:
+            from src.agents.rl_agent import train_agent, play_game
+            train_agent(episodes=args.episodes, model_path=args.model)
+            play_game(None, model_path=args.model)
+        elif args.train:
+            from src.agents.rl_agent import train_agent
+            train_agent(episodes=args.episodes, model_path=args.model)
+        elif args.play:
+            from src.agents.rl_agent import play_game
+            play_game(None, model_path=args.model)
+        else:
+            print("Please specify --train or --play")
+    else:  # CNN agent
+        if args.train and args.play:
+            from src.agents.cnn_rl_agent import train_agent, play_game
+            train_agent(episodes=args.episodes, model_path=args.model)
+            play_game(None, model_path=args.model)
+        elif args.train:
+            from src.agents.cnn_rl_agent import train_agent
+            train_agent(episodes=args.episodes, model_path=args.model)
+        elif args.play:
+            from src.agents.cnn_rl_agent import play_game
+            play_game(None, model_path=args.model)
+        else:
+            print("Please specify --train or --play")
     
-    if args.train:
-        cmd.append("--train")
-    if args.play:
-        cmd.append("--play")
-    
-    cmd.extend(["--episodes", str(args.episodes)])
-    cmd.extend(["--model", args.model])
-    
-    print(f"Running {args.agent.upper()} agent...")
-    
-    # Execute the command
-    os.execv(sys.executable, cmd)
+    print(f"Finished running {args.agent.upper()} agent.")
 
 if __name__ == "__main__":
     main() 

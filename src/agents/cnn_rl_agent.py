@@ -10,9 +10,8 @@ from tqdm import tqdm
 import os
 import sys
 
-# 添加2048目录到路径
-sys.path.append(os.path.join(os.path.dirname(__file__), '2048'))
-from game import Game2048
+# Import from the new structure
+from src.core.game import Game2048
 
 # Set random seeds for reproducibility
 random.seed(42)
@@ -222,7 +221,7 @@ def calculate_reward(prev_score, current_score, prev_max_tile, current_max_tile)
     
     return score_reward + tile_reward
 
-def train_agent(episodes=1000, target_update=10, save_interval=100, model_path="cnn_rl_model.pth"):
+def train_agent(episodes=1000, target_update=10, save_interval=100, model_path="models/cnn_rl_model.pth"):
     agent = CNNDQNAgent()
     
     # Try to load existing model
@@ -327,7 +326,7 @@ def plot_training_progress(agent, episodes):
     plt.savefig(f"cnn_training_progress_{episodes}.png")
     plt.close()
 
-def play_game(agent, model_path="cnn_rl_model.pth", render=True):
+def play_game(agent, model_path="models/cnn_rl_model.pth", render=True):
     """Play a single game with the trained agent"""
     # Load the trained model
     agent.load_model(model_path)
@@ -371,7 +370,7 @@ if __name__ == "__main__":
     parser.add_argument('--train', action='store_true', help='Train the agent')
     parser.add_argument('--play', action='store_true', help='Play a game with the trained agent')
     parser.add_argument('--episodes', type=int, default=1000, help='Number of episodes for training')
-    parser.add_argument('--model', type=str, default="cnn_rl_model.pth", help='Path to save/load the model')
+    parser.add_argument('--model', type=str, default="models/cnn_rl_model.pth", help='Path to save/load the model')
     
     args = parser.parse_args()
     

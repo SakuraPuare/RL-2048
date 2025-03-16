@@ -15,13 +15,11 @@ import os
 plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False
 
-# 添加2048目录到路径
-sys.path.append(os.path.join(os.path.dirname(__file__), '2048'))
-
-# 导入各种智能体
-from random_agent import RandomAgent
-from rl_agent import DQNAgent, play_game as dqn_play_game
-from cnn_rl_agent import CNNDQNAgent, play_game as cnn_play_game
+# Import from the new structure
+from src.core.game import Game2048
+from src.agents.random_agent import RandomAgent
+from src.agents.rl_agent import DQNAgent
+from src.agents.cnn_rl_agent import CNNDQNAgent
 
 def evaluate_random_agent(num_games=100):
     """评估随机策略智能体"""
@@ -29,7 +27,7 @@ def evaluate_random_agent(num_games=100):
     agent = RandomAgent()
     return agent.evaluate(num_games=num_games)
 
-def evaluate_dqn_agent(model_path="rl_model.pth", num_games=100):
+def evaluate_dqn_agent(model_path="models/rl_model.pth", num_games=100):
     """评估DQN智能体"""
     print(f"\n正在评估DQN智能体 ({num_games} 局游戏)...")
     agent = DQNAgent()
@@ -70,7 +68,7 @@ def evaluate_dqn_agent(model_path="rl_model.pth", num_games=100):
     
     return avg_score, max_score, tile_counter, scores, max_tiles
 
-def evaluate_cnn_agent(model_path="cnn_rl_model.pth", num_games=100):
+def evaluate_cnn_agent(model_path="models/cnn_rl_model.pth", num_games=100):
     """评估CNN-DQN智能体"""
     print(f"\n正在评估CNN-DQN智能体 ({num_games} 局游戏)...")
     agent = CNNDQNAgent()
@@ -111,14 +109,14 @@ def evaluate_cnn_agent(model_path="cnn_rl_model.pth", num_games=100):
     
     return avg_score, max_score, tile_counter, scores, max_tiles
 
-def compare_agents(num_games=100, dqn_model="rl_model.pth", cnn_model="cnn_rl_model.pth"):
+def compare_agents(games=100, dqn_model="models/rl_model.pth", cnn_model="models/cnn_rl_model.pth"):
     """比较所有智能体的性能"""
     # 评估随机策略
-    random_avg_score, random_max_score, random_tile_counter = evaluate_random_agent(num_games)
+    random_avg_score, random_max_score, random_tile_counter = evaluate_random_agent(games)
     
     # 评估DQN智能体
     try:
-        dqn_avg_score, dqn_max_score, dqn_tile_counter, dqn_scores, dqn_max_tiles = evaluate_dqn_agent(dqn_model, num_games)
+        dqn_avg_score, dqn_max_score, dqn_tile_counter, dqn_scores, dqn_max_tiles = evaluate_dqn_agent(dqn_model, games)
         has_dqn = True
     except Exception as e:
         print(f"无法评估DQN智能体: {e}")
@@ -126,7 +124,7 @@ def compare_agents(num_games=100, dqn_model="rl_model.pth", cnn_model="cnn_rl_mo
     
     # 评估CNN-DQN智能体
     try:
-        cnn_avg_score, cnn_max_score, cnn_tile_counter, cnn_scores, cnn_max_tiles = evaluate_cnn_agent(cnn_model, num_games)
+        cnn_avg_score, cnn_max_score, cnn_tile_counter, cnn_scores, cnn_max_tiles = evaluate_cnn_agent(cnn_model, games)
         has_cnn = True
     except Exception as e:
         print(f"无法评估CNN-DQN智能体: {e}")
@@ -182,13 +180,13 @@ def compare_agents(num_games=100, dqn_model="rl_model.pth", cnn_model="cnn_rl_mo
     all_tiles = sorted(all_tiles)
     
     # 计算每个智能体的方块分布百分比
-    random_percentages = [random_tile_counter.get(tile, 0) / num_games * 100 for tile in all_tiles]
+    random_percentages = [random_tile_counter.get(tile, 0) / games * 100 for tile in all_tiles]
     
     if has_dqn:
-        dqn_percentages = [dqn_tile_counter.get(tile, 0) / num_games * 100 for tile in all_tiles]
+        dqn_percentages = [dqn_tile_counter.get(tile, 0) / games * 100 for tile in all_tiles]
     
     if has_cnn:
-        cnn_percentages = [cnn_tile_counter.get(tile, 0) / num_games * 100 for tile in all_tiles]
+        cnn_percentages = [cnn_tile_counter.get(tile, 0) / games * 100 for tile in all_tiles]
     
     # 设置柱状图
     x = np.arange(len(all_tiles))
@@ -235,13 +233,13 @@ def compare_agents(num_games=100, dqn_model="rl_model.pth", cnn_model="cnn_rl_mo
 def main():
     parser = argparse.ArgumentParser(description='比较2048智能体')
     parser.add_argument('--games', type=int, default=100, help='每个智能体评估的游戏局数')
-    parser.add_argument('--dqn-model', type=str, default="rl_model.pth", help='DQN模型路径')
-    parser.add_argument('--cnn-model', type=str, default="cnn_rl_model.pth", help='CNN-DQN模型路径')
+    parser.add_argument('--dqn-model', type=str, default="models/rl_model.pth", help='DQN模型路径')
+    parser.add_argument('--cnn-model', type=str, default="models/cnn_rl_model.pth", help='CNN-DQN模型路径')
     
     args = parser.parse_args()
     
     compare_agents(
-        num_games=args.games,
+        games=args.games,
         dqn_model=args.dqn_model,
         cnn_model=args.cnn_model
     )

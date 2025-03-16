@@ -12,8 +12,8 @@ class GameRecorder:
         self.game_id = datetime.now().strftime("%Y%m%d_%H%M%S")
         
         # 创建record文件夹
-        self.record_dir = Path("record")
-        self.record_dir.mkdir(exist_ok=True)
+        self.record_dir = Path("data/records")
+        self.record_dir.mkdir(exist_ok=True, parents=True)
         
         # 设置默认文件名（在record文件夹中）
         self.current_filename = self.record_dir / f"game_record_{self.game_id}.json"
@@ -106,7 +106,7 @@ class GameRecorder:
         
         # 如果提供的文件名不包含路径，则添加record文件夹路径
         if not filepath.parent.name:
-            record_dir = Path("record")
+            record_dir = Path("data/records")
             filepath = record_dir / filepath
             
         # 如果文件名不以.json结尾，添加扩展名

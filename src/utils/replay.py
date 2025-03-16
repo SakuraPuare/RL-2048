@@ -14,8 +14,8 @@
 import sys
 import argparse
 from pathlib import Path
-from game import Game2048
-from display import ReplayDisplay
+from src.core.game import Game2048
+from src.visualization.display import ReplayDisplay
 
 def main():
     parser = argparse.ArgumentParser(description='2048游戏回放工具')
